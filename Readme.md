@@ -19,10 +19,11 @@ $ pip3 install requests
 ```
 ### Uso
 ```bash
-$ python3 give_me_turno.py
+$ python3 give_me_turno.py <ID de credencial>
 ```
 Y en caso que quisieras que corra bien pero bien bien bien
-temprano asi te aseguras la reservacion, usa un cronjob
+temprano asi te aseguras la reservacion, usa un cronjob, para evitar mandarlo
+como parametro podes harcodearlo en el `user_id`
 ```bash
 $ chmod +x /path/to/script/give_me_turno.py
 $ JOB="1 8 * * 1-5 /usr/local/bin/python3 /path/to/script/give_me_turno.py"
