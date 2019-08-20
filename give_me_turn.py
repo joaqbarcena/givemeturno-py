@@ -5,11 +5,17 @@ import re
 import random
 import string
 
+from PIL import Image
+from io import BytesIO
+
+#<img id="control-captcha" src="/reserva/aplicacion.php?ah=st5d5c666e5f3244.58435588&amp;ai=migestion%7C%7C3614&amp;ts=mostrar_captchas_efs&amp;tsd=migestion%7C%7C2689">
 user_id = sys.argv[1]
 url = "http://comedor.unc.edu.ar/reserva"
 app_path_rekey = r"/aplicacion\.php.*onsubmit"
 cstoken_rekey = r"id='cstoken'.*/>"
-alert_rekey = r"UD REGISTRA.*;</script></div>"
+#alert_rekey = r"UD REGISTRA.*;</script></div>" Lo cambiaron jajaja
+alert_rekey = r"<script language='JavaScript'>alert\(.*;</script></div>"
+captcha_rekey=r"/aplicacion\.php.*?ts=mostrar_captchas_efs.*?>"
 session = requests.Session()
 
 def rand16chars():
@@ -18,8 +24,8 @@ def rand16chars():
 def generate_boundary():
 	return "----WebKitFormBoundary" + rand16chars()
 
-def login_data(token, boundary) : 
-	return "--" + boundary + "\nContent-Disposition: form-data; name=\"cstoken\"\n\n" + token  + "\n--" + boundary + "\nContent-Disposition: form-data; name=\"form_2689_datos\"\n\n" + "ingresar" + "\n--" + boundary  + "\nContent-Disposition: form-data; name=\"form_2689_datos_implicito\"\n\n" + "\n--" + boundary  + "\nContent-Disposition: form-data; name=\"ef_form_2689_datosusuario\"\n\n" + user_id + "\n--" + boundary  + "--"
+def login_data(token, boundary, captcha) : 
+	return "--" + boundary + "\nContent-Disposition: form-data; name=\"cstoken\"\n\n" + token  + "\n--" + boundary + "\nContent-Disposition: form-data; name=\"form_2689_datos\"\n\n" + "ingresar" + "\n--" + boundary  + "\nContent-Disposition: form-data; name=\"form_2689_datos_implicito\"\n\n" + "\n--" + boundary  + "\nContent-Disposition: form-data; name=\"ef_form_2689_datosusuario\"\n\n" + user_id + "\n--" + boundary  + "\nContent-Disposition: form-data; name=\"ef_form_2689_datoscontrol\"\n\n" + captcha + "\n--" + boundary  + "--"
 
 def process_data(token, boundary, user_data="") : 
 	"""
@@ -34,9 +40,8 @@ def process_data(token, boundary, user_data="") :
 	else:
 		return "TODO"
 
-def do_login(app_path, cstoken, boundary):
-	post_data = login_data(cstoken, boundary)
-	#print(post_data)
+def do_login(app_path, cstoken, boundary, captcha):
+	post_data = login_data(cstoken, boundary, captcha)
 	response = session.request("POST",
 		url + app_path, 
 		data = post_data,
@@ -83,26 +88,44 @@ def parse_web(lpage, get_alert_message=False):
 				break
 	return info
 
+
 """
 Primer peticion a la pagina de login
 """
 response = session.request("GET", url + "/", data="", headers={ 'cache-control': "no-cache" })
 login = response.text
+#print(login)
 parsed = parse_web(login)
 print("Before login => " + str(parsed))
+print("Showing captcha ... ?")
+
+img = None
+captchas = re.findall(captcha_rekey,login)
+for captcha in captchas :
+	print(captcha[:-4])
+	#response = requests.get(url + captcha[:-4]) el captcha que espera es de la misma session (cookies)
+	response = session.get(url + captcha[:-4])
+	img = Image.open(BytesIO(response.content))
+	img.show()
+	break
+captcha_code = input("Enter captcha code:\n")
 """
 Empieza a preparar la request para el login
 """
-boundary = generate_boundary()
-profile = do_login(parsed["path"], parsed["token"], boundary)
-#print(profile)
-parsed = parse_web(profile)
-print("After login => " + str(parsed))
-"""
-Empieza a preparar la request para la reservacion
-#reserve_profile = do_process(app_path, cstoken, boundary)
-"""
-reserve_profile = do_process(parsed["path"], parsed["token"], boundary)
-parsed = parse_web(reserve_profile, get_alert_message=True)
-print("After reservation => " + str(parsed))
+try:
+	boundary = generate_boundary()
+	profile = do_login(parsed["path"], parsed["token"], boundary, captcha_code)
+	parsed = parse_web(profile)
+	print("After login => " + str(parsed))
 
+	"""
+	Empieza a preparar la request para la reservacion
+	#reserve_profile = do_process(app_path, cstoken, boundary)
+	"""
+	reserve_profile = do_process(parsed["path"], parsed["token"], boundary)
+	parsed = parse_web(reserve_profile, get_alert_message=True)
+	print("After reservation => " + str(parsed))
+except Exception as e:
+	raise
+finally:
+	if not img == None: img.close() #no funciona como esperaba, hay que cerrar manualmente las imagenes

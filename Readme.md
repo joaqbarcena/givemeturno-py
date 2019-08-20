@@ -1,4 +1,7 @@
 # 🍅 🥑 GiveMeTurno 🍔 🍗
+## Update : 20/08 
+Cerca del mediodia en login pusieron un captcha(lo cual esta bien), la idea es en el paso intermedio del login traer el captcha para resolverlo y que conitnue igual
+Tambien cambiaron partes de la pagina asi que hubieron modificaciones en el regex del parser
 
 ## Aun no ha sido completamente probado, hoy viernes (16/8) se hacen las pruebas finales ya que dependen del server de la UNC
 
