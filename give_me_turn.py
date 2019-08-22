@@ -96,6 +96,7 @@ response = session.request("GET", url + "/", data="", headers={ 'cache-control':
 login = response.text
 #print(login)
 parsed = parse_web(login)
+parsed["cookies"] = session.cookies.get_dict()
 print("Before login => " + str(parsed))
 print("Showing captcha ... ?")
 
@@ -116,8 +117,9 @@ try:
 	boundary = generate_boundary()
 	profile = do_login(parsed["path"], parsed["token"], boundary, captcha_code)
 	parsed = parse_web(profile)
+	parsed["cookies"] = session.cookies.get_dict()
 	print("After login => " + str(parsed))
-
+	
 	"""
 	Empieza a preparar la request para la reservacion
 	#reserve_profile = do_process(app_path, cstoken, boundary)
