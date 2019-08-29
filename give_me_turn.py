@@ -84,7 +84,7 @@ def parse_web(lpage, get_alert_message=False):
 		for res in reslist:
 			idx = res.find("alert('")
 			if idx >= 0:
-				info["alert"] = res[idx + len("alert('") : res.find("');")]
+				info["alert"] = res[idx + len("alert('") : res.find(");")]
 				break
 	return info
 
