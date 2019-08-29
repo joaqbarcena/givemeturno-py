@@ -1,4 +1,5 @@
 # 🍅 🥑 GiveMeTurno 🍔 🍗
+# El desarrollo se mueve a la integracion con los repos de [UNCMorfi](https://github.com/joaqbarcena/UNCmorfiServer), ya que es inmantenible updatear 4 repos
 
 ## Update : 22/08 - 3:44 (jaja)
 Se puede esquivar el captcha si uno guarda la session despues de hacer el primer
